@@ -1,6 +1,8 @@
 import pygame
 from os import listdir
+
 from settings import *
+from sprite import Entity
 
 
 class Player(pygame.sprite.Sprite):
@@ -33,11 +35,12 @@ class Player(pygame.sprite.Sprite):
 
         # Parametry
         self.block_group = parameters['block_group']
+        self.textures = parameters['textures']
 
         # Wartości fizyczne
         self.velocity = pygame.math.Vector2()
         self.speed = 150
-        self.on_ground = False
+        self.is_grounded = False
         self.jump_cooldown = 0
         self.jump_force = -450
         self.DT = get_DT(self.clock)
@@ -74,9 +77,9 @@ class Player(pygame.sprite.Sprite):
                     if self.velocity.y < 0: # Poruszanie w górę
                         self.rect.top =block.rect.bottom
             if collisions > 0:
-                self.on_ground = True
+                self.is_grounded = True
             else:
-                self.on_ground = False
+                self.is_grounded = False
 
     def move(self):
         self.velocity.y += GRAVITY * self.DT
@@ -95,29 +98,63 @@ class Player(pygame.sprite.Sprite):
         elif self.velocity.x < -MAX_X_VELOCITY:
             self.velocity.x = -MAX_X_VELOCITY
 
+    def input(self, keys):
+        if not self.is_grounded:
+            self.update_action(2)  # Animacja skoku
+        elif keys[pygame.K_a] or keys[pygame.K_d]:
+            self.update_action(1)  # Animacja biegania
+        else:
+            self.update_action(0)  # Animacja stania
+
+        if keys[pygame.K_a]:
+            self.velocity.x -= self.speed * self.DT
+        if keys[pygame.K_d]:
+            self.velocity.x += self.speed * self.DT
+        if not keys[pygame.K_a] and not keys[pygame.K_d]:
+            self.velocity.x = 0
+
+        if keys[pygame.K_SPACE] and self.is_grounded and self.jump_cooldown == 0:
+            self.velocity.y = self.jump_force
+            self.jump_cooldown = 0.2 * self.DT  # Ustawienie opóźnienia skoku
+
+    # Funkcja zwracająca pozycję myszki z uwzględnieniem przesunięcia kamery
+    def get_adjusted_mouse_pos(self) -> tuple:
+        mouse_pos = pygame.mouse.get_pos()
+        player_offset = pygame.math.Vector2()
+        player_offset.x = SCREEN_WIDTH / 2 - self.rect.centerx
+        player_offset.y = SCREEN_HEIGHT / 2 - self.rect.centery
+
+        return (mouse_pos[0] - player_offset.x, mouse_pos[1] - player_offset.y)
+
+    # Funkcja pomagająca ustawić blok w siatce (gridzie)
+    def get_block_pos(self, mouse_pos: tuple):
+        return (int ((mouse_pos[0]//TILE_SIZE)*TILE_SIZE), int ((mouse_pos[1]//TILE_SIZE)*TILE_SIZE))
+
+    def block_handling(self, keys):
+        state = pygame.mouse.get_pressed()
+        mouse_pos = self.get_adjusted_mouse_pos()
+        grid_pos = self.get_block_pos(mouse_pos)
+        placed = False
+        collision = False
+
+        if any(state): # pygame.mouse.get_pressed() zwraca listę w której LMB ma indeks 0 i RMB 2
+            for block in self.block_group:
+                if block.rect.collidepoint(mouse_pos):
+                    collision = True
+                    if state[0]:
+                        block.kill()
+            if state[2] and not collision:
+                placed = True
+        if placed:
+            block = Entity(block.active_groups, self.textures['grass'], grid_pos)
+
     def update(self):
         keys = pygame.key.get_pressed()
 
         if self.alive:
-            if not self.on_ground:
-                self.update_action(2) # Animacja skoku
-            elif keys[pygame.K_a] or keys[pygame.K_d]:
-                self.update_action(1) # Animacja biegania
-            else:
-                self.update_action(0) # Animacja stania
-
-            if keys[pygame.K_a]:
-                self.velocity.x -= self.speed * self.DT
-            if keys[pygame.K_d]:
-                self.velocity.x += self.speed * self.DT
-            if not keys[pygame.K_a] and not keys[pygame.K_d]:
-                self.velocity.x = 0
-
-            if keys[pygame.K_SPACE] and self.on_ground and self.jump_cooldown == 0:
-                self.velocity.y = self.jump_force
-                self.jump_cooldown = 0.2 * self.DT  # Ustawienie opóźnienia skoku
-
+            self.input(keys)
             self.move()
+            self.block_handling(keys)
 
         # Resetowanie gry jeśli gracz spadnie poza ekran
         if self.rect.top > SCREEN_HEIGHT:

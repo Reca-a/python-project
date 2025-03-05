@@ -1,9 +1,9 @@
 import pygame
 from opensimplex import OpenSimplex
 from settings import *
-from sprite import Entity
+from sprite import Entity, Mob
 from player import Player
-from texture_data import atlas_texture_data
+from texture_data import atlas_texture_data, solo_texture_data
 from camera import Camera
 
 
@@ -15,12 +15,23 @@ class Scene:
 
         # Wczytanie tekstur
         self.atlas_textures = self.gen_altas_textures('Assets/blocks/atlas.png')
+        self.solo_textures = self.gen_solo_textures('Assets/mobs/zombie.png')
 
         # Stworzenie gracza
-        self.player = Player([self.sprites], 150, SCREEN_HEIGHT - 200, parameters={'block_group': self.blocks})
+        self.player = Player([self.sprites], 150, SCREEN_HEIGHT - 200, parameters={'block_group': self.blocks, 'textures':self.atlas_textures})
+
+        # Stworzenie moba
+        Mob([self.sprites], pygame.transform.scale(pygame.image.load('Assets/mobs/zombie.png').convert_alpha(), (TILE_SIZE, TILE_SIZE)),
+            (200, 400), parameters={'block_group':self.blocks, 'player':self.player, 'speed':70})
 
         # Generacja świata
         self.gen_world()
+
+    def gen_solo_textures(self, file_path):
+        textures = {}
+        for name, data in solo_texture_data.items():
+            textures[name] = pygame.transform.scale(pygame.image.load(data['file_path']).convert_alpha(), data['size'])
+        return textures
 
     def gen_altas_textures(self, file_path):
         textures = {}
@@ -38,7 +49,7 @@ class Scene:
         noise_generator = OpenSimplex(seed=92413458)
         heightmap = []
 
-        for y in range(20):
+        for y in range(60):
             noise_value = noise_generator.noise2(y * 4, 0)
             height = int((noise_value + 1) * 4 + 5)
             heightmap.append(height)

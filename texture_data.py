@@ -7,5 +7,6 @@ atlas_texture_data = {
 }
 solo_texture_data = {
     # Reimplementacja tekstur gracza
-    #'player_static': {'type':'player', 'file_path':'Assets/player/idle/0.png', 'size':(TILE_SIZE, TILE_SIZE)}
+    # 'player_static': {'type':'player', 'file_path':'Assets/player/idle/0.png', 'size':(TILE_SIZE, TILE_SIZE)}
+    'zombie_static': {'type':'enemy', 'file_path':'Assets/mobs/zombie.png', 'size':(TILE_SIZE, TILE_SIZE)}
 }
