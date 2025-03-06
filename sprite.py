@@ -1,12 +1,13 @@
+import pygame
 import math
 
-import pygame
 from settings import *
 
 
 class Entity(pygame.sprite.Sprite):
-    def __init__(self, groups, image = pygame.Surface((TILE_SIZE, TILE_SIZE)), position = (0,0)):
+    def __init__(self, groups, image = pygame.Surface((TILE_SIZE, TILE_SIZE)), position = (0,0), name: str = "default"):
         super().__init__(groups)
+        self.name = name
         self.active_groups = groups
         self.image = image
         self.rect = self.image.get_rect(topleft = position)
@@ -66,11 +67,11 @@ class Mob(Entity):
 
         # Sprawdzenie odległości do gracza
         if abs(math.sqrt((self.rect.x - self.player.rect.x)**2 + (self.rect.y - self.player.rect.y)**2)) < TILE_SIZE * 10:
-            self.attacking = True
             if self.rect.x > self.player.rect.x:
                 self.velocity.x -= self.speed * self.DT
             elif self.rect.x < self.player.rect.x:
                 self.velocity.x += self.speed * self.DT
+            self.attacking = True
         else:
             self.attacking = False
             self.velocity.x = 0

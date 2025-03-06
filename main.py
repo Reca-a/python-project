@@ -1,5 +1,6 @@
 import sys
 import pygame
+
 from settings import *
 from scene import Scene
 
@@ -18,6 +19,8 @@ class Game:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+            if event.type == pygame.KEYDOWN and (event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT):
+                self.scene.inventory.input(event)
 
         self.scene.update()
 

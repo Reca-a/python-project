@@ -1,5 +1,7 @@
 import pygame
 from opensimplex import OpenSimplex
+
+from inventory.inventory import Inventory
 from settings import *
 from sprite import Entity, Mob
 from player import Player
@@ -12,13 +14,22 @@ class Scene:
         self.app = app
         self.sprites = Camera()
         self.blocks = pygame.sprite.Group()
+        self.group_list: dict[str, pygame.sprite.Group] = {
+            'sprites': self.sprites,
+            'block_group': self.blocks
+        }
 
         # Wczytanie tekstur
         self.atlas_textures = self.gen_altas_textures('Assets/blocks/atlas.png')
         self.solo_textures = self.gen_solo_textures('Assets/mobs/zombie.png')
 
+        # Ekwipunek
+        self.inventory = Inventory(self.app)
+
         # Stworzenie gracza
-        self.player = Player([self.sprites], 150, SCREEN_HEIGHT - 200, parameters={'block_group': self.blocks, 'textures':self.atlas_textures})
+        self.player = Player([self.sprites], 150, SCREEN_HEIGHT - 200, parameters={
+                            'textures':self.atlas_textures, 'group_list': self.group_list, 'inventory':self.inventory})
+
 
         # Stworzenie moba
         Mob([self.sprites], pygame.transform.scale(pygame.image.load('Assets/mobs/zombie.png').convert_alpha(), (TILE_SIZE, TILE_SIZE)),
@@ -59,18 +70,20 @@ class Scene:
                 y_offset = 5 - y + 34
 
                 # Wybór tekstury
-                texture = self.atlas_textures['dirt']
+                block_type = 'dirt'
                 if y == heightmap[x] - 1:
-                    texture = self.atlas_textures['grass']
+                    block_type = 'grass'
                 if y < heightmap[x] - 5:
-                    texture = self.atlas_textures['stone']
+                    block_type = 'stone'
 
-                Entity([self.sprites, self.blocks], texture, (x * TILE_SIZE, y_offset * TILE_SIZE))
+                Entity([self.sprites, self.blocks], self.atlas_textures[block_type], (x * TILE_SIZE, y_offset * TILE_SIZE), name=block_type)
 
     def update(self):
         self.sprites.update()
         self.player.update_animation()
+        self.inventory.update()
 
     def draw(self):
         self.app.screen.fill('lightblue')
         self.sprites.draw(self.player, self.app.screen)
+        self.inventory.draw()

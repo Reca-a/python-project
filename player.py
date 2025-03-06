@@ -2,7 +2,6 @@ import pygame
 from os import listdir
 
 from settings import *
-from sprite import Entity
 
 
 class Player(pygame.sprite.Sprite):
@@ -34,8 +33,10 @@ class Player(pygame.sprite.Sprite):
         self.flip = False
 
         # Parametry
-        self.block_group = parameters['block_group']
+        self.group_list = parameters['group_list']
         self.textures = parameters['textures']
+        self.block_group = self.group_list['block_group']
+        self.inventory = parameters['inventory']
 
         # Wartości fizyczne
         self.velocity = pygame.math.Vector2()
@@ -46,7 +47,7 @@ class Player(pygame.sprite.Sprite):
         self.DT = get_DT(self.clock)
 
     def update_animation(self):
-        self.image = self.animation_list[self.action][self.frame_index]
+        self.image = pygame.transform.flip(self.animation_list[self.action][self.frame_index], self.flip, False)
         if pygame.time.get_ticks() - self.update_time > ANIMATION_COOLDOWN:
             self.update_time = pygame.time.get_ticks()
             self.frame_index += 1
@@ -108,8 +109,10 @@ class Player(pygame.sprite.Sprite):
 
         if keys[pygame.K_a]:
             self.velocity.x -= self.speed * self.DT
+            self.flip = True
         if keys[pygame.K_d]:
             self.velocity.x += self.speed * self.DT
+            self.flip = False
         if not keys[pygame.K_a] and not keys[pygame.K_d]:
             self.velocity.x = 0
 
@@ -133,7 +136,6 @@ class Player(pygame.sprite.Sprite):
     def block_handling(self, keys):
         state = pygame.mouse.get_pressed()
         mouse_pos = self.get_adjusted_mouse_pos()
-        grid_pos = self.get_block_pos(mouse_pos)
         placed = False
         collision = False
 
@@ -141,12 +143,13 @@ class Player(pygame.sprite.Sprite):
             for block in self.block_group:
                 if block.rect.collidepoint(mouse_pos):
                     collision = True
-                    if state[0]:
+                    if state[0]: # Niszczenie bloku
+                        self.inventory.add_item(block)
                         block.kill()
-            if state[2] and not collision:
+            if state[2] and not collision: # Stawianie bloku
                 placed = True
         if placed:
-            block = Entity(block.active_groups, self.textures['grass'], grid_pos)
+            self.inventory.use(self, self.get_block_pos(mouse_pos))
 
     def update(self):
         keys = pygame.key.get_pressed()
