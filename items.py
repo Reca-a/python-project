@@ -6,9 +6,6 @@ class Item:
         self.name = name
         self.quantity = quantity
 
-    def __str__(self):
-        return f'\nName: {self.name}, Quantity: {self.quantity}'
-
     def use(self, *args, **kwargs):
         pass
 

@@ -159,11 +159,6 @@ class Player(pygame.sprite.Sprite):
             self.move()
             self.block_handling(keys)
 
-        # Resetowanie gry jeśli gracz spadnie poza ekran
-        if self.rect.top > SCREEN_HEIGHT:
-            self.rect.topleft = (100, SCREEN_HEIGHT - 100)
-            self.velocity_y = 0
-
         # Zmniejszanie opóźnienia skoku
         if self.jump_cooldown > 0:
             self.jump_cooldown -= self.DT
