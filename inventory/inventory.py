@@ -11,12 +11,10 @@ class Inventory:
         self.slots = []
         self.active_slot = 0
 
-        self.font = pygame.font.Font(None, 30)
+        self.font = pygame.font.Font(None, 26)
 
         for index in range(5):
             self.slots.append(Item())
-        self.slots[1] = BlockItem('grass', 5)
-        self.slots[2] = BlockItem('dirt', 3)
 
     def use(self, player, position):
         if self.slots[self.active_slot].name != "empty":
@@ -32,7 +30,7 @@ class Inventory:
 
     def add_item(self, item):
         first_available_slot = len(self.slots) # Pierwsze znalezione miejsce w ekwipunku
-        target_slot = len(self.slots) # Pierwsze miejsce z tym samym przedmiotem
+        target_slot = first_available_slot # Pierwsze miejsce z tym samym przedmiotem
         for index, slot in enumerate(self.slots):
             if slot.name == "empty" and index < first_available_slot:
                 first_available_slot = index

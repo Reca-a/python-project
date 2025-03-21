@@ -54,9 +54,7 @@ class Mob(Entity):
             else:
                 self.is_grounded = False
 
-    def move(self):
-        self.velocity.y += GRAVITY * self.DT
-
+    def vel_check(self):
         if self.velocity.y > MAX_Y_VELOCITY:
             self.velocity.y = MAX_Y_VELOCITY
 
@@ -64,6 +62,10 @@ class Mob(Entity):
             self.velocity.x = MAX_X_VELOCITY
         elif self.velocity.x < -MAX_X_VELOCITY:
             self.velocity.x = -MAX_X_VELOCITY
+
+    def move(self):
+        self.vel_check()
+        self.velocity.y += GRAVITY * self.DT
 
         # Sprawdzenie odległości do gracza
         if abs(math.sqrt((self.rect.x - self.player.rect.x)**2 + (self.rect.y - self.player.rect.y)**2)) < TILE_SIZE * 10:
@@ -79,6 +81,8 @@ class Mob(Entity):
         if self.is_grounded and self.attacking and abs(self.velocity.x) < 1:
             self.velocity.y = - 300
 
+        self.vel_check()
+
         self.rect.y += self.velocity.y * self.DT
         self.check_collisions('vertical')
 
@@ -87,3 +91,4 @@ class Mob(Entity):
 
     def update(self):
         self.move()
+        self.vel_check()

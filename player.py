@@ -21,7 +21,7 @@ class Player(pygame.sprite.Sprite):
             num_of_frames = listdir(f'Assets/player/{animation}')
             for i in range(len(num_of_frames)):
                 img = pygame.image.load(f'Assets/player/{animation}/{i}.png').convert_alpha()
-                img = pygame.transform.scale(img, (int(img.get_width() * SCALE), (int(img.get_height() * SCALE))))
+                img = pygame.transform.scale(img, (int(img.get_width()), (int(img.get_height() * SCALE))))
                 temp_list.append(img)
             self.animation_list.append(temp_list)
 
@@ -40,10 +40,10 @@ class Player(pygame.sprite.Sprite):
 
         # Wartości fizyczne
         self.velocity = pygame.math.Vector2()
-        self.speed = 150
+        self.accel = 150
         self.is_grounded = False
         self.jump_cooldown = 0
-        self.jump_force = -450
+        self.jump_force = -420
         self.DT = get_DT(self.clock)
 
     def update_animation(self):
@@ -73,16 +73,18 @@ class Player(pygame.sprite.Sprite):
             for block in self.block_group:
                 if block.rect.colliderect(self.rect):
                     if self.velocity.y > 0: # Poruszanie w dół
-                        self.rect.bottom =block.rect.top
+                        self.rect.bottom = block.rect.top
                         collisions += 1
                     if self.velocity.y < 0: # Poruszanie w górę
-                        self.rect.top =block.rect.bottom
+                        self.rect.top = block.rect.bottom
+                        self.velocity.y = 0
             if collisions > 0:
                 self.is_grounded = True
             else:
                 self.is_grounded = False
 
     def move(self):
+        self.vel_check()
         self.velocity.y += GRAVITY * self.DT
 
         self.rect.y += self.velocity.y * self.DT
@@ -91,6 +93,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.x += self.velocity.x
         self.check_collisions('horizontal')
 
+    def vel_check(self):
         if self.velocity.y > MAX_Y_VELOCITY:
             self.velocity.y = MAX_Y_VELOCITY
 
@@ -108,17 +111,17 @@ class Player(pygame.sprite.Sprite):
             self.update_action(0)  # Animacja stania
 
         if keys[pygame.K_a]:
-            self.velocity.x -= self.speed * self.DT
+            self.velocity.x -= self.accel * self.DT
             self.flip = True
         if keys[pygame.K_d]:
-            self.velocity.x += self.speed * self.DT
+            self.velocity.x += self.accel * self.DT
             self.flip = False
         if not keys[pygame.K_a] and not keys[pygame.K_d]:
             self.velocity.x = 0
 
         if keys[pygame.K_SPACE] and self.is_grounded and self.jump_cooldown == 0:
             self.velocity.y = self.jump_force
-            self.jump_cooldown = 0.2 * self.DT  # Ustawienie opóźnienia skoku
+            self.jump_cooldown = 0.5 * self.DT  # Ustawienie opóźnienia skoku
 
     # Funkcja zwracająca pozycję myszki z uwzględnieniem przesunięcia kamery
     def get_adjusted_mouse_pos(self) -> tuple:
@@ -146,7 +149,7 @@ class Player(pygame.sprite.Sprite):
                     if state[0]: # Niszczenie bloku
                         self.inventory.add_item(block)
                         block.kill()
-            if state[2] and not collision: # Stawianie bloku
+            if not self.rect.collidepoint(mouse_pos) and state[2] and not collision: # Stawianie bloku
                 placed = True
         if placed:
             self.inventory.use(self, self.get_block_pos(mouse_pos))
@@ -161,6 +164,8 @@ class Player(pygame.sprite.Sprite):
 
         # Zmniejszanie opóźnienia skoku
         if self.jump_cooldown > 0:
-            self.jump_cooldown -= self.DT
+            self.jump_cooldown -= self.DT / 60
             if self.jump_cooldown < 0:
                 self.jump_cooldown = 0
+
+        self.vel_check()
