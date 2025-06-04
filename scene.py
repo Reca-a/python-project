@@ -21,6 +21,8 @@ class Scene:
             'sprites': self.sprites,
             'block_group': self.blocks
         }
+        self.dark_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.dark_alpha = 0
 
         # Wczytanie tekstur
         self.atlas_textures = self.gen_atlas_textures('Assets/blocks/atlas.png')
@@ -103,10 +105,19 @@ class Scene:
             self.active_chunks[target].unload_chunk()
             self.active_chunks.pop(target)
 
+        self.dark_alpha = (self.player.rect.centery - 650) // 6
+
+    def screen_vignette(self):
+        # Przyciemnienie ekranu
+        self.dark_surface.fill((0, 0, 0))
+        self.dark_surface.set_alpha(self.dark_alpha)
+        pygame.draw.circle(self.dark_surface, (0, 0, 0, 0), (self.player.rect.center), 100)
+        self.app.screen.blit(self.dark_surface, (0, 0))
 
     def draw(self):
         self.app.screen.fill('lightblue')
         self.sprites.draw(self.player, self.app.screen)
+        self.screen_vignette()
         self.inventory.draw()
 
 
@@ -120,7 +131,7 @@ class Chunk:
 
         self.gen_chunk()
 
-    def initialize_underworld_chunk(self, chunk_data):
+    def initialize_underground_chunk(self, chunk_data):
         height = len(chunk_data)
         width = len(chunk_data[0])
         for x in range(height):
@@ -199,7 +210,7 @@ class Chunk:
 
         # Jeśli chunk znajduje się pod ziemią, tworzenie jaskiń
         if self.position[1] > 0:
-            chunk_data = self.initialize_underworld_chunk(chunk_data)
+            chunk_data = self.initialize_underground_chunk(chunk_data)
             for _ in range(CELLAUT_NUMBER_OF_STEPS):
                 chunk_data = self.cellaut_sim_step(chunk_data)
 
@@ -207,19 +218,24 @@ class Chunk:
         for x in range(CHUNK_SIZE):
             for y in range(CHUNK_SIZE):
                 if chunk_data[x, y] != 'air' and chunk_data[x, y]:  # Pominięcie powietrza
-                    use_type = items[str(chunk_data[x, y])].use_type
-                    groups = [self.group_list[str(group)] for group in items[str(chunk_data[x, y])].groups]
-                    self.blocks.append(use_type(groups,
-                                                self.textures[chunk_data[x, y]],
-                                                (x * TILE_SIZE + CHUNK_PIXEL_SIZE * self.position[0],
-                                                 (CHUNK_SIZE - y) * TILE_SIZE + CHUNK_PIXEL_SIZE * self.position[1]),
-                                                chunk_data[x, y]))
+                    name = chunk_data[x, y]
+                    if name and name != 'air':
+                        # Pobranie ItemData z rejestru
+                        item_data = registry.get_data(name)
+                        # Pobranie klasy
+                        use_type = item_data.use_type
+                        groups = [self.group_list[group] for group in item_data.groups]
+                        # Tworzenie instancji bloku
+                        world_x = x * TILE_SIZE + CHUNK_PIXEL_SIZE * self.position[0]
+                        world_y = (CHUNK_SIZE - y) * TILE_SIZE + CHUNK_PIXEL_SIZE * self.position[1]
+                        block = use_type(groups, self.textures[name], (world_x, world_y), name)
+                        self.blocks.append(block)
 
     def load_chunk(self):
         for block in self.blocks:
-            groups = [self.group_list[group] for group in items[block.name].groups]
-            for group in groups:
-                group.add(block)
+            item_data = registry.get_data(block.name)
+            for group_name in item_data.groups:
+                self.group_list[group_name].add(block)
 
     def unload_chunk(self):
         for block in self.blocks:

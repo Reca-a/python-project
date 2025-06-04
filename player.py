@@ -1,6 +1,7 @@
 import pygame
 from os import listdir
 
+from items import registry
 from settings import *
 
 
@@ -9,6 +10,7 @@ class Player(pygame.sprite.Sprite):
         super().__init__(groups)
         self.clock = pygame.time.Clock()
         self.alive = True
+        self.health = 100
         self.animation_list = []
         self.frame_index = 0
         self.action = 0
@@ -146,10 +148,10 @@ class Player(pygame.sprite.Sprite):
             for block in self.block_group:
                 if block.rect.collidepoint(mouse_pos):
                     collision = True
-                    if state[0]: # Niszczenie bloku
-                        self.inventory.add_item(block)
+                    if state[0]: # LMB - Niszczenie bloku
+                        self.inventory.add_item(registry.create(block.name, 1))
                         block.kill()
-            if not self.rect.collidepoint(mouse_pos) and state[2] and not collision: # Stawianie bloku
+            if not self.rect.collidepoint(mouse_pos) and state[2] and not collision: # RMB - Stawianie bloku
                 placed = True
         if placed:
             self.inventory.use(self, self.get_block_pos(mouse_pos))

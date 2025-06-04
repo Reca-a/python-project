@@ -1,3 +1,5 @@
+from operator import truediv
+
 import pygame
 
 from items import *
@@ -8,17 +10,19 @@ class Inventory:
         self.app = app
         self.screen = app.screen
         self.textures = textures
-        self.slots = []
+        self.size = 5
+        self.slots: list[Item] = [
+            registry.create('empty', 0) for _ in range(self.size)
+        ]
         self.active_slot = 0
 
         self.font = pygame.font.Font(None, 26)
 
-        for index in range(5):
-            self.slots.append(Item())
-
     def use(self, player, position):
-        if self.slots[self.active_slot].name != "empty":
-            self.slots[self.active_slot].use(player, position)
+        item = self.slots[self.active_slot]
+        item.use(player, position)
+        if item.quantity <= 0:
+            self.slots[self.active_slot] = registry.create('empty', 0)
 
     def input(self, event):
         if event.key == pygame.K_RIGHT:
@@ -29,17 +33,17 @@ class Inventory:
                 self.active_slot -= 1
 
     def add_item(self, item):
-        first_available_slot = len(self.slots) # Pierwsze znalezione miejsce w ekwipunku
-        target_slot = first_available_slot # Pierwsze miejsce z tym samym przedmiotem
-        for index, slot in enumerate(self.slots):
-            if slot.name == "empty" and index < first_available_slot:
-                first_available_slot = index
-            if slot.name == item.name:
-                target_slot = index
-        if target_slot < len(self.slots):
-            self.slots[target_slot].quantity += items[item.name].quantity
-        elif first_available_slot < len(self.slots):
-            self.slots[first_available_slot] = items[item.name].item_type(item.name, items[item.name].quantity)
+        for slot in self.slots:
+            if slot.name == item.name and slot.name != "empty":
+                slot.quantity += item.quantity
+                return True
+        for idx, slot in enumerate(self.slots):
+            if slot.name == "empty":
+                self.slots[idx] = item
+                return True
+
+        # Brak miejsca
+        return False
 
     def update(self):
         pass
