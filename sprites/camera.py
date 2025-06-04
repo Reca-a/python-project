@@ -1,6 +1,6 @@
 import pygame
 
-from player import Player
+from sprites.player import Player
 from settings import SCREEN_WIDTH, SCREEN_HEIGHT
 
 

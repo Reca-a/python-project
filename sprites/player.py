@@ -1,7 +1,7 @@
 import pygame
 from os import listdir
 
-from items import registry
+from inventory.items import registry
 from settings import *
 
 
@@ -96,6 +96,7 @@ class Player(pygame.sprite.Sprite):
         self.check_collisions('horizontal')
 
     def vel_check(self):
+        """Sprawdzenie prędkości"""
         if self.velocity.y > MAX_Y_VELOCITY:
             self.velocity.y = MAX_Y_VELOCITY
 
@@ -134,11 +135,12 @@ class Player(pygame.sprite.Sprite):
 
         return (mouse_pos[0] - player_offset.x, mouse_pos[1] - player_offset.y)
 
-    # Funkcja pomagająca ustawić blok w siatce (gridzie)
     def get_block_pos(self, mouse_pos: tuple):
+        """Pomaga ustawić blok w siatce (gridzie)"""
         return (int ((mouse_pos[0]//TILE_SIZE)*TILE_SIZE), int ((mouse_pos[1]//TILE_SIZE)*TILE_SIZE))
 
     def block_handling(self, keys):
+        """Obsługuje stawianie i niszczenie bloków"""
         state = pygame.mouse.get_pressed()
         mouse_pos = self.get_adjusted_mouse_pos()
         placed = False

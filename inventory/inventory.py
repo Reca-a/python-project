@@ -1,8 +1,4 @@
-from operator import truediv
-
-import pygame
-
-from items import *
+from inventory.items import *
 
 
 class Inventory:

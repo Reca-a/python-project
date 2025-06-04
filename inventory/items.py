@@ -1,4 +1,4 @@
-from sprite import *
+from sprites.sprite import *
 
 
 class ItemData:
@@ -22,8 +22,8 @@ class Item:
         pass
 
 class BlockItem(Item):
-    def __init__(self, name: str, quantity: int = 0):
-        super().__init__(name, quantity)
+    def __init__(self, data: ItemData, quantity: int = 0):
+        super().__init__(data, quantity)
 
     def use(self, player, position: tuple):
         if self.quantity <= 0:
@@ -62,8 +62,23 @@ class ItemRegistry:
             raise KeyError(f"Item '{name}' not found")
         return info.item_type(info, quantity)
 
+# Rejestr przedmiotów
 registry = ItemRegistry()
+
+# Podstawowe bloki
 registry.register(ItemData('grass', item_type=BlockItem))
-registry.register(ItemData('dirt',  item_type=BlockItem))
+registry.register(ItemData('dirt', item_type=BlockItem))
 registry.register(ItemData('stone', item_type=BlockItem))
+
+# Drewno i liście
+registry.register(ItemData('wood', item_type=BlockItem))
+registry.register(ItemData('leaves', item_type=BlockItem))
+
+# Rudy
+registry.register(ItemData('coal_ore', item_type=BlockItem))
+registry.register(ItemData('iron_ore', item_type=BlockItem))
+registry.register(ItemData('gold_ore', item_type=BlockItem))
+registry.register(ItemData('diamond_ore', item_type=BlockItem))
+
+# Pusty slot
 registry.register(ItemData('empty', item_type=EmptyItem))
